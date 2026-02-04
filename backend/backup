@@ -4,7 +4,6 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Gérer OPTIONS (prévol CORS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -12,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 try {
     $host = getenv("DB_HOST") ?: "db";
-    $name = getenv("DB_NAME") ?: "appdb";  // ⚠️ Attention: votre docker-compose dit "tp1" pas "appdb"
+    $name = getenv("DB_NAME") ?: "appdb"; 
     $user = getenv("DB_USER") ?: "root";
     $pass = getenv("DB_PASSWORD") ?: "root";
 
@@ -26,10 +25,8 @@ try {
     exit;
 }
 
-// Récupérer l'ID si fourni
 $id = isset($_GET['id']) ? intval($_GET['id']) : null;
 
-// Lire (GET)
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($id !== null) {
         $stmt = $pdo->prepare("SELECT * FROM produits WHERE id = ?");
@@ -49,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 }
 
-// Ajouter (POST)
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     
@@ -63,7 +59,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     echo json_encode($stmt->fetch());
 }
 
-// Modifier (PUT)
+
 elseif ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     if ($id === null) {
         http_response_code(400);
@@ -86,7 +82,6 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     }
 }
 
-// Supprimer (DELETE)
 elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     if ($id === null) {
         http_response_code(400);
