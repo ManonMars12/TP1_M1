@@ -44,13 +44,11 @@
         function loadProducts() {
             fetch('http://backend/backend.php')
 
-
                 .then(response => response.json())
                 .then(products => {
                     const tbody = document.getElementById('products-tbody');
                     tbody.innerHTML = ''; // Vider le tableau
                     
-                    // Ajouter chaque produit au tableau
                     products.forEach(product => {
                         const row = tbody.insertRow();
                         row.innerHTML = `
