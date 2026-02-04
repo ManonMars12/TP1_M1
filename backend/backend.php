@@ -1,20 +1,28 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *'); // CORS pour front
+header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
-
-$host = getenv("DB_HOST") ?: "db";
-$name = getenv("DB_NAME") ?: "appdb";
-$user = getenv("DB_USER") ?: "root";
-$pass = getenv("DB_PASSWORD") ?: "root";
-
-$pdo = new PDO("mysql:host=$host;dbname=$name;charset=utf8mb4", $user, $pass);
-$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 // Gérer OPTIONS (prévol CORS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
+    exit;
+}
+
+try {
+    $host = getenv("DB_HOST") ?: "db";
+    $name = getenv("DB_NAME") ?: "appdb";  // ⚠️ Attention: votre docker-compose dit "tp1" pas "appdb"
+    $user = getenv("DB_USER") ?: "root";
+    $pass = getenv("DB_PASSWORD") ?: "root";
+
+    $pdo = new PDO("mysql:host=$host;dbname=$name;charset=utf8mb4", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(["error" => "Connexion échouée: " . $e->getMessage()]);
     exit;
 }
 
@@ -24,45 +32,76 @@ $id = isset($_GET['id']) ? intval($_GET['id']) : null;
 // Lire (GET)
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($id !== null) {
-        if (isset($products[$id])) {
-            echo json_encode($products[$id]);
+        $stmt = $pdo->prepare("SELECT * FROM produits WHERE id = ?");
+        $stmt->execute([$id]);
+        $product = $stmt->fetch();
+        
+        if ($product) {
+            echo json_encode($product);
         } else {
             http_response_code(404);
             echo json_encode(["error" => "Produit non trouvé"]);
         }
     } else {
-        echo json_encode(array_values($products));
+        $stmt = $pdo->query("SELECT * FROM produits");
+        $products = $stmt->fetchAll();
+        echo json_encode($products);
     }
 }
 
 // Ajouter (POST)
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
-    $newId = max(array_keys($products)) + 1;
-    $products[$newId] = ["id" => $newId] + $data;
-    echo json_encode($products[$newId]);
+    
+    $stmt = $pdo->prepare("INSERT INTO produits (libelle, marque, prix) VALUES (?, ?, ?)");
+    $stmt->execute([$data['libelle'], $data['marque'], $data['prix']]);
+    
+    $newId = $pdo->lastInsertId();
+    $stmt = $pdo->prepare("SELECT * FROM produits WHERE id = ?");
+    $stmt->execute([$newId]);
+    
+    echo json_encode($stmt->fetch());
 }
 
 // Modifier (PUT)
 elseif ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-    if ($id === null || !isset($products[$id])) {
-        http_response_code(404);
-        echo json_encode(["error" => "Produit non trouvé"]);
+    if ($id === null) {
+        http_response_code(400);
+        echo json_encode(["error" => "ID requis"]);
         exit;
     }
+    
     $data = json_decode(file_get_contents('php://input'), true);
-    $products[$id] = ["id" => $id] + $data;
-    echo json_encode($products[$id]);
+    
+    $stmt = $pdo->prepare("UPDATE produits SET libelle = ?, marque = ?, prix = ? WHERE id = ?");
+    $stmt->execute([$data['libelle'], $data['marque'], $data['prix'], $id]);
+    
+    if ($stmt->rowCount() > 0) {
+        $stmt = $pdo->prepare("SELECT * FROM produits WHERE id = ?");
+        $stmt->execute([$id]);
+        echo json_encode($stmt->fetch());
+    } else {
+        http_response_code(404);
+        echo json_encode(["error" => "Produit non trouvé"]);
+    }
 }
 
 // Supprimer (DELETE)
 elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-    if ($id === null || !isset($products[$id])) {
-        http_response_code(404);
-        echo json_encode(["error" => "Produit non trouvé"]);
+    if ($id === null) {
+        http_response_code(400);
+        echo json_encode(["error" => "ID requis"]);
         exit;
     }
-    unset($products[$id]);
-    echo json_encode(["success" => true]);
+    
+    $stmt = $pdo->prepare("DELETE FROM produits WHERE id = ?");
+    $stmt->execute([$id]);
+    
+    if ($stmt->rowCount() > 0) {
+        echo json_encode(["success" => true]);
+    } else {
+        http_response_code(404);
+        echo json_encode(["error" => "Produit non trouvé"]);
+    }
 }
 ?>

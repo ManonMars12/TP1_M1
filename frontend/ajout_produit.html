@@ -1,33 +1,70 @@
 <!DOCTYPE html> 
 <html> 
     <head> 
-        <title> TP1 M1 </title>
+        <title>TP1 M1</title>
     </head>
 
     <body> 
-        <h2> Ajouter un produit </h2>
-        </br> 
-        <form>
-        <label>Libelle du produit :</label><br>
-        <input type="text" id="libelle_produit"><br><br>
+        <h2>Ajouter un produit</h2>
+        <br> 
+        <form id="form-ajout">
+            <label>Libellé du produit :</label><br>
+            <input type="text" id="libelle_produit" required><br><br>
 
-        <label> Marque :</label><br>
-        <input type="text" id="marque_produit"><br><br>
+            <label>Marque :</label><br>
+            <input type="text" id="marque_produit" required><br><br>
 
-        <label>Prix :</label><br>
-        <input type="number" id="prix_produit"><br><br>
+            <label>Prix :</label><br>
+            <input type="number" id="prix_produit" required><br><br>
 
-        <button type="submit">Ajouter</button>
-    </form>
+            <button type="submit">Ajouter</button>
+        </form>
 
-     </br> 
+        <div id="message"></div>
 
-    <a href="index.html">
-    <button> Retour </button>
-</a>
+        <br> 
+
+        <a href="index.html">
+            <button>Retour</button>
+        </a>
+
+        <script>
+            document.getElementById('form-ajout').addEventListener('submit', function(e) {
+                e.preventDefault(); // Empêcher le rechargement de la page
+
+                // Récupérer les valeurs du formulaire
+                const produit = {
+                    libelle: document.getElementById('libelle_produit').value,
+                    marque: document.getElementById('marque_produit').value,
+                    prix: parseFloat(document.getElementById('prix_produit').value)
+                };
+
+                // Envoyer la requête POST à l'API
+                fetch('http://host.docker.internal/api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(produit)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('message').innerHTML = 
+                        '<p style="color: green;">Produit ajouté avec succès !</p>';
+                    // Réinitialiser le formulaire
+                    document.getElementById('form-ajout').reset();
+                    
+                    // Rediriger vers la page principale après 1 seconde
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    document.getElementById('message').innerHTML = 
+                        '<p style="color: red;">Erreur lors de l\'ajout du produit</p>';
+                });
+            });
+        </script>
     </body>
-
-
-
-
 </html>

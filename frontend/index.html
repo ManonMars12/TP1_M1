@@ -1,32 +1,74 @@
-<!DOCTYPE html> 
-<html> 
-    <head> 
-        <title> TP1 M1 </title>
-    </head>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TP1 M1</title>
+</head>
+<body>
+    <h1>Gestion de produits</h1>
+    <br>
+    <h2>Liste des produits</h2>
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Libellé</th>
+                <th>Marque</th>
+                <th>Prix</th>
+            </tr>
+        </thead>
+        <tbody id="products-tbody">
+            <!-- Les produits seront chargés ici -->
+        </tbody>
+    </table>
 
-    <body> 
-     <h1>Gestion de produits</h1>
-<br>
+    <br>
 
-<h2>Liste des produits</h2>
+    <a href="ajout_produit.html">
+        <button>Ajouter un produit</button>
+    </a>
 
-<table border="1" cellpadding="8">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Libelle</th>
-            <th>Marque</th>
-            <th>Prix</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
+    <br>
 
-</br> 
+    <a href="modification_produit.html">
+        <button>Modifier un produit</button>
+    </a>
 
-<a href="ajout_produit.html">
-    <button>Ajouter un produit</button>
-</a>
+    <br>
+
+    <a href="suppression_produit.html">
+        <button>Supprimer un produit</button>
+    </a>
+
+    <script>
+        // Fonction pour charger les produits
+        function loadProducts() {
+            fetch('http://backend/backend.php')
+
+
+                .then(response => response.json())
+                .then(products => {
+                    const tbody = document.getElementById('products-tbody');
+                    tbody.innerHTML = ''; // Vider le tableau
+                    
+                    // Ajouter chaque produit au tableau
+                    products.forEach(product => {
+                        const row = tbody.insertRow();
+                        row.innerHTML = `
+                            <td>${product.id}</td>
+                            <td>${product.libelle}</td>
+                            <td>${product.marque}</td>
+                            <td>${product.prix} €</td>
+                        `;
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des produits:', error);
+                    alert('Impossible de charger les produits. Vérifiez que le serveur PHP est démarré.');
+                });
+        }
+
+        // Charger les produits au chargement de la page
+        window.addEventListener('DOMContentLoaded', loadProducts);
+    </script>
 </body>
 </html>
