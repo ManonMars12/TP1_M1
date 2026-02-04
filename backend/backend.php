@@ -4,10 +4,13 @@ header('Access-Control-Allow-Origin: *'); // CORS pour front
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-$products = [
-    1 => ["id" => 1, "libelle" => "Ordinateur", "marque" => "Dell", "prix" => 800],
-    2 => ["id" => 2, "libelle" => "Téléphone", "marque" => "Samsung", "prix" => 500],
-];
+$host = getenv("DB_HOST") ?: "db";
+$name = getenv("DB_NAME") ?: "appdb";
+$user = getenv("DB_USER") ?: "root";
+$pass = getenv("DB_PASSWORD") ?: "root";
+
+$pdo = new PDO("mysql:host=$host;dbname=$name;charset=utf8mb4", $user, $pass);
+$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 // Gérer OPTIONS (prévol CORS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
